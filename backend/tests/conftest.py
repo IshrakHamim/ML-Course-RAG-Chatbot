@@ -38,7 +38,22 @@ def _database():
 
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    from app.models import Base
+
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
     yield
+
+
+@pytest.fixture(autouse=True)
+def _clean_tables():
+    yield
+    from app.core.db import engine
+    from app.models import Base
+
+    names = ", ".join(table.name for table in Base.metadata.sorted_tables)
+    with engine.begin() as conn:
+        conn.execute(text(f"TRUNCATE {names} CASCADE"))
 
 
 @pytest.fixture
