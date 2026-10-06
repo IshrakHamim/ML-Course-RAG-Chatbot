@@ -149,12 +149,17 @@ def _safe_filename(filename: str) -> str:
     return PurePosixPath(filename.replace("\\", "/")).name or "document"
 
 
+def check_supported(filename: str) -> None:
+    extension = PurePosixPath(_safe_filename(filename)).suffix.lower()
+    if extension != ".pdf" and extension not in TEXT_EXTENSIONS:
+        raise IngestionError(415, SUPPORTED_MESSAGE)
+
+
 def load_upload(filename: str, data: bytes) -> ExtractedDoc:
+    check_supported(filename)
     name = _safe_filename(filename)
     path = PurePosixPath(name)
     extension = path.suffix.lower()
-    if extension != ".pdf" and extension not in TEXT_EXTENSIONS:
-        raise IngestionError(415, SUPPORTED_MESSAGE)
     if not data:
         raise IngestionError(422, "The file is empty")
     title = path.stem or name

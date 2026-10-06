@@ -1,14 +1,17 @@
 import logging
 import time
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
+from sqlalchemy.exc import OperationalError
 
-from app.api import auth, health
+from app.api import auth, documents, health
 from app.core.config import Settings, get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import setup_logging
+from app.services.documents import count_stale_chunks
 
 logger = logging.getLogger(__name__)
 API_PREFIX = "/api/v1"
@@ -24,6 +27,28 @@ def _load_settings() -> Settings:
         raise SystemExit(1) from None
 
 
+def _warn_about_stale_chunks() -> None:
+    from app.core.db import SessionLocal
+
+    try:
+        with SessionLocal() as db:
+            stale = count_stale_chunks(db)
+    except OperationalError:
+        logger.warning("Database not reachable at startup; is `docker compose up -d db` running?")
+        return
+    if stale:
+        logger.warning(
+            "%d chunks were embedded with a different model; run `python -m app.cli reindex`",
+            stale,
+        )
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _warn_about_stale_chunks()
+    yield
+
+
 def create_app() -> FastAPI:
     settings = _load_settings()
     setup_logging(settings.log_level)
@@ -32,6 +57,7 @@ def create_app() -> FastAPI:
         title="ML Course RAG Chatbot API",
         version="0.1.0",
         description="Answers questions only from the uploaded knowledge base.",
+        lifespan=lifespan,
     )
     app.add_middleware(
         CORSMiddleware,
@@ -53,6 +79,7 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
     app.include_router(health.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
+    app.include_router(documents.router, prefix=API_PREFIX)
     return app
 
 
