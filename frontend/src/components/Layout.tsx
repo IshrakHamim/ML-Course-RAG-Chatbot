@@ -1,13 +1,17 @@
 import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { Sparkle } from './Sparkle'
 
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   return (
     <div className="app">
       <header className="topbar">
-        <span className="brand">Course Assistant</span>
+        <span className="brand">
+          <Sparkle size={22} />
+          QueryBuddy
+        </span>
         <nav>
           <NavLink to="/chat">Chat</NavLink>
           {user?.role === 'admin' && <NavLink to="/admin">Knowledge base</NavLink>}

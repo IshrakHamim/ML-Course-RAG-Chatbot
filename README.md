@@ -1,6 +1,6 @@
-# ML Course RAG Chatbot
+# QueryBuddy
 
-A chatbot that answers questions **only** from a knowledge base you give it (PDF, TXT/Markdown
+QueryBuddy is the ML course RAG chatbot: it answers questions **only** from a knowledge base you give it (PDF, TXT/Markdown
 files and web pages), using Retrieval-Augmented Generation with Google Gemini and
 PostgreSQL + pgvector. When the answer isn't in the knowledge base, it says so politely
 instead of guessing.

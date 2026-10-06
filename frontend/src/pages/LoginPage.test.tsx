@@ -36,6 +36,11 @@ async function fillAndSubmit(email: string, password: string, button = /log in/i
 }
 
 describe('LoginPage', () => {
+  it('shows the QueryBuddy name', () => {
+    renderLogin()
+    expect(screen.getByRole('heading', { name: 'QueryBuddy' })).toBeInTheDocument()
+  })
+
   it('logs in and goes to the chat', async () => {
     const auth = renderLogin()
     await fillAndSubmit('amy@example.com', 'password123')

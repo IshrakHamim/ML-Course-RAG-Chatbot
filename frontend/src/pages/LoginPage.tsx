@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { Sparkle } from '../components/Sparkle'
 import { Spinner } from '../components/Spinner'
 
 const MIN_PASSWORD = 8
@@ -37,7 +38,8 @@ export function LoginPage() {
   return (
     <main className="page-center">
       <form className="card auth-card" onSubmit={handleSubmit} noValidate>
-        <h1>Course Assistant</h1>
+        <Sparkle size={44} className="auth-logo" />
+        <h1>QueryBuddy</h1>
         <p className="muted">
           {isLogin ? 'Log in to ask questions about the course material.' : 'Create an account.'}
         </p>

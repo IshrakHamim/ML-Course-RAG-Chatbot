@@ -44,7 +44,7 @@ def create_app() -> FastAPI:
     setup_logging(settings.log_level)
 
     app = FastAPI(
-        title="ML Course RAG Chatbot API",
+        title="QueryBuddy API",
         version="0.1.0",
         description="Answers questions only from the uploaded knowledge base.",
         lifespan=lifespan,
