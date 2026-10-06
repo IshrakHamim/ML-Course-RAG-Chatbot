@@ -173,11 +173,14 @@ HINTS = {
 
 
 def _auth_hint(api_key: str, use_vertex: bool) -> str:
-    if api_key.startswith("AQ.") and not use_vertex:
-        return "This looks like a Vertex AI express key (AQ.): set GEMINI_USE_VERTEX=true."
-    if api_key.startswith("AIza") and use_vertex:
-        return "This looks like an AI Studio key (AIza): set GEMINI_USE_VERTEX=false."
-    return "The key was rejected: check GEMINI_API_KEY, or try flipping GEMINI_USE_VERTEX."
+    if use_vertex:
+        return (
+            "Vertex AI rejected the key (or the Vertex AI API is not enabled for its project). "
+            "If this is a Google AI Studio key (AIza... or AQ....), set GEMINI_USE_VERTEX=false."
+        )
+    if api_key.startswith("AQ."):
+        return "If this is a Vertex AI express key (AQ.), set GEMINI_USE_VERTEX=true."
+    return "The key was rejected: check GEMINI_API_KEY, or try GEMINI_USE_VERTEX=true."
 
 
 def run_check() -> int:

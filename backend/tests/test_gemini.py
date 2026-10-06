@@ -251,3 +251,10 @@ def test_single_text_400_still_raises(stub, monkeypatch):
     stub.embed_script = [api_error(400, "bad"), api_error(400, "bad")]
     with pytest.raises(AIServiceError):
         gemini.embed_texts(["a"], "RETRIEVAL_DOCUMENT")
+
+
+def test_check_gemini_suggests_ai_studio_when_vertex_api_disabled(stub, monkeypatch, capsys):
+    use_settings(monkeypatch, gemini_api_key=SecretStr("AQ.example"), gemini_use_vertex=True)
+    stub.generate_script = [api_error(403, "Agent Platform API has not been used in project 1")]
+    assert gemini.run_check() == 1
+    assert "GEMINI_USE_VERTEX=false" in capsys.readouterr().out

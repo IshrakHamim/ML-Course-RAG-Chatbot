@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=REPO_ROOT / ".env", extra="ignore")
 
     gemini_api_key: SecretStr
-    gemini_use_vertex: bool = True
-    gemini_chat_model: str = "gemini-2.5-flash"
+    gemini_use_vertex: bool = False
+    gemini_chat_model: str = "gemini-3.8-flash"
     gemini_embedding_model: str = "gemini-embedding-001"
     embedding_dim: int = Field(768, ge=1, le=2000)
     embed_batch_size: int = Field(50, ge=1, le=250)
