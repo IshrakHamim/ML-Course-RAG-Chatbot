@@ -6,6 +6,8 @@ TEST_DATABASE_URL = os.environ.get(
 os.environ["GEMINI_API_KEY"] = "test-key"
 os.environ["JWT_SECRET"] = "t" * 40
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+# The fake bag-of-words embeddings score lower than real Gemini embeddings.
+os.environ["RAG_MIN_SCORE"] = "0.2"
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
@@ -119,3 +121,18 @@ def fake_gemini(monkeypatch):
     monkeypatch.setattr(gemini, "embed_query", fake.embed_query)
     monkeypatch.setattr(gemini, "generate", fake.generate)
     return fake
+
+
+HANDBOOK_TEXT = (
+    "The late submission policy deducts ten percent per day.\n\n"
+    "Office hours are on Tuesdays at 3pm in room 204."
+)
+
+
+@pytest.fixture
+def seeded_kb(db, fake_gemini):
+    from app.services import documents
+    from app.services.ingestion import ExtractedDoc, Section
+
+    doc = ExtractedDoc("Course Handbook", "text", "handbook.md", [Section(HANDBOOK_TEXT, None)])
+    return documents.ingest(db, doc, user_id=None).document

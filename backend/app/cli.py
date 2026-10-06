@@ -17,7 +17,7 @@ from app.core.logging import setup_logging
 from app.core.security import hash_password
 from app.models import User
 from app.schemas.auth import RegisterRequest
-from app.services import documents, gemini, ingestion
+from app.services import documents, gemini, ingestion, retrieval
 from app.services.ingestion import ExtractedDoc, IngestionError
 
 
@@ -106,6 +106,20 @@ def reindex() -> int:
     return 0
 
 
+def search(question: str) -> int:
+    settings = get_settings()
+    with SessionLocal() as db:
+        hits = retrieval.search(db, gemini.embed_query(question), settings.rag_top_k)
+    out(f"Top {settings.rag_top_k} chunks (RAG_MIN_SCORE={settings.rag_min_score}):")
+    for hit in hits:
+        page = hit.page if hit.page is not None else "-"
+        mark = "pass" if hit.score >= settings.rag_min_score else "    "
+        out(f"  {hit.score:.3f} {mark}  {hit.title}  (page {page})")
+    if not hits:
+        out("  (no chunks)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m app.cli")
     commands = parser.add_subparsers(dest="command", required=True)
@@ -119,6 +133,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ingest.add_argument("path")
     commands.add_parser("reindex", help="Re-embed chunks made with a different embedding model")
+    search_cmd = commands.add_parser("search", help="Show retrieval scores for a question")
+    search_cmd.add_argument("question")
     return parser
 
 
@@ -134,6 +150,8 @@ def main(argv: list[str] | None = None) -> int:
         return ingest_path(args.path)
     if args.command == "reindex":
         return reindex()
+    if args.command == "search":
+        return search(args.question)
     return 1
 
 

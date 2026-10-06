@@ -183,7 +183,7 @@ The key only authenticates you. **Which model runs is set by config**, not by th
 
 - Prefix `/api/v1`:
   - `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
-  - `POST /chat` with `{ session_id?, message }` → `{ answer, sources[], session_id, grounded }`
+  - `POST /chat` with `{ session_id?, message }` → `{ answer, sources[], session_id, grounded, kind }`, where `kind` is `answer`, `fallback` or `greeting`. The UI styles replies by `kind`, so greetings never look like "not found"
   - `GET /chat/sessions`, `GET /chat/sessions/{id}`, `DELETE /chat/sessions/{id}`
   - `POST /documents` (upload), `POST /documents/url`, `GET /documents`, `DELETE /documents/{id}` (admin only)
   - `GET /health` (checks the DB)
