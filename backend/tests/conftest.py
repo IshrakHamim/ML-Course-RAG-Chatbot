@@ -74,3 +74,36 @@ def client():
     with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def make_user(db):
+    from app.core.security import hash_password
+    from app.models import User
+
+    def _make_user(
+        email: str = "user@example.com", role: str = "user", password: str = "password123"
+    ):
+        user = User(email=email, password_hash=hash_password(password), role=role)
+        db.add(user)
+        db.commit()
+        return user
+
+    return _make_user
+
+
+@pytest.fixture
+def token_for():
+    from app.core.security import create_access_token
+
+    return lambda user: create_access_token(user.id)
+
+
+@pytest.fixture
+def user(make_user, token_for) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token_for(make_user('user@example.com'))}"}
+
+
+@pytest.fixture
+def admin(make_user, token_for) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token_for(make_user('admin@example.com', 'admin'))}"}
