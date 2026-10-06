@@ -109,7 +109,7 @@ React (Vite) ──HTTP/JSON──▶ FastAPI ──▶ rag.py ──▶ gemini.
   client = genai.Client(vertexai=True, api_key=settings.gemini_api_key)
   ```
   Control this with `GEMINI_USE_VERTEX=true|false`. If calls fail with 401/403 ("API key not valid"), try the other mode first.
-- `python -m app.cli check-gemini` must: (1) make one tiny generate call, (2) make one embed call and print the vector length, (3) print clear, actionable errors (wrong key type, model not found, quota exceeded). Run it before the first ingestion and before every demo.
+- `python -m app.cli check-gemini` must: (1) make one tiny generate call, (2) make one embed call and print the vector length, then one batch embed call, (3) print clear, actionable errors (wrong key type, model not found, quota exceeded). Run it before the first ingestion and before every demo.
 
 ### Models
 
@@ -125,7 +125,7 @@ The key only authenticates you. **Which model runs is set by config**, not by th
 
 ### Quota and errors (likely during a demo)
 
-- Free-tier keys have low per-minute limits. Ingesting a medium knowledge base can hit **429 / RESOURCE_EXHAUSTED**. Embed in batches (e.g. 50–100 chunks per call) and retry with exponential backoff (3–5 attempts).
+- Free-tier keys have low per-minute limits. Ingesting a medium knowledge base can hit **429 / RESOURCE_EXHAUSTED**. Embed in batches of `EMBED_BATCH_SIZE` chunks per call (default 50) and retry with exponential backoff (3–5 attempts). Some Vertex AI models accept only one text per embed call; `check-gemini` tests a batch of 2 and tells you to set `EMBED_BATCH_SIZE=1` if needed.
 - Use a 30 s timeout on every Gemini call.
 - Map failures to a clear message in the UI ("The AI service is busy, please try again"). They must **not** look like the "not found in knowledge base" fallback.
 - A safety-filter block or empty response is treated as an error, not as an answer.
@@ -208,6 +208,7 @@ GEMINI_USE_VERTEX=true                 # true for AQ.... keys, false for AIza...
 GEMINI_CHAT_MODEL=gemini-2.5-flash
 GEMINI_EMBEDDING_MODEL=gemini-embedding-001
 EMBEDDING_DIM=768
+EMBED_BATCH_SIZE=50                    # set to 1 if check-gemini says batching is unsupported
 DATABASE_URL=postgresql+psycopg://rag:rag@localhost:5432/ragbot
 JWT_SECRET=                            # any long random string
 JWT_EXPIRE_MINUTES=120

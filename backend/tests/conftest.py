@@ -107,3 +107,15 @@ def user(make_user, token_for) -> dict[str, str]:
 @pytest.fixture
 def admin(make_user, token_for) -> dict[str, str]:
     return {"Authorization": f"Bearer {token_for(make_user('admin@example.com', 'admin'))}"}
+
+
+@pytest.fixture
+def fake_gemini(monkeypatch):
+    from app.services import gemini
+    from tests.fakes import FakeGemini
+
+    fake = FakeGemini()
+    monkeypatch.setattr(gemini, "embed_texts", fake.embed_texts)
+    monkeypatch.setattr(gemini, "embed_query", fake.embed_query)
+    monkeypatch.setattr(gemini, "generate", fake.generate)
+    return fake

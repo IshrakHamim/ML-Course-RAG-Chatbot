@@ -14,6 +14,7 @@ from app.core.logging import setup_logging
 from app.core.security import hash_password
 from app.models import User
 from app.schemas.auth import RegisterRequest
+from app.services import gemini
 
 
 def out(line: str = "") -> None:
@@ -52,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
         "create-admin", help="Create an admin (or promote an existing user)"
     )
     admin.add_argument("--email")
+    commands.add_parser("check-gemini", help="Check the Gemini key, models and vector length")
     return parser
 
 
@@ -61,6 +63,8 @@ def main(argv: list[str] | None = None) -> int:
     logging.getLogger(__name__).debug("Running %s", args.command)
     if args.command == "create-admin":
         return create_admin(args.email)
+    if args.command == "check-gemini":
+        return gemini.run_check()
     return 1
 
 
