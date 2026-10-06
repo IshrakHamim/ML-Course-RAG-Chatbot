@@ -372,3 +372,15 @@ def test_oversized_page_422(monkeypatch):
         fetch("https://example.com/huge", lambda r: html_response(huge))
     assert exc.value.status_code == 422
     assert "too large" in exc.value.message
+
+
+def test_inline_elements_stay_on_one_line():
+    html = (
+        "<main><h2>Intro</h2><p>RAG is a <a href='/x'>technique</a> for <b>LLMs</b>"
+        "<sup>[1]</sup>.</p><ul><li>One</li><li>Two</li></ul><p>Second paragraph.</p></main>"
+    )
+    doc = fetch("https://example.com/", lambda r: html_response(html))
+    lines = doc.sections[0].text.split("\n")
+    assert "RAG is a technique for LLMs[1]." in lines
+    assert "Intro" in lines and "Second paragraph." in lines
+    assert "One" in lines and "Two" in lines

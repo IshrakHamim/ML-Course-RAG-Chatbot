@@ -26,6 +26,10 @@ HTML_CONTENT_TYPES = {"text/html", "application/xhtml+xml"}
 URL_TIMEOUT_SECONDS = 10
 MAX_REDIRECTS = 5
 USER_AGENT = "ML-Course-RAG-Chatbot/0.1 (course demo)"
+BLOCK_TAGS = [
+    "p", "div", "section", "article", "li", "ul", "ol", "dl", "dt", "dd", "table", "tr", "td",
+    "th", "caption", "figcaption", "blockquote", "pre", "h1", "h2", "h3", "h4", "h5", "h6",
+]  # fmt: skip
 NON_CONTENT_TAGS = [
     "script",
     "style",
@@ -234,7 +238,15 @@ def _html_to_doc(html: str, url: str) -> ExtractedDoc:
     for tag in soup(NON_CONTENT_TAGS):
         tag.decompose()
     root = soup.find("main") or soup.find("article") or soup.body or soup
-    lines = (line.strip() for line in root.get_text("\n").split("\n"))
+    # Inline elements (links, bold, citations) stay on one line; block elements get line breaks.
+    for node in root.find_all(string=True):
+        node.replace_with(re.sub(r"\s+", " ", str(node)))
+    for br in root.find_all("br"):
+        br.replace_with("\n")
+    for block in root.find_all(BLOCK_TAGS):
+        block.insert_before("\n")
+        block.append("\n")
+    lines = (line.strip() for line in root.get_text().split("\n"))
     text = clean_text("\n".join(lines))
     if not text:
         raise IngestionError(422, "The page has no readable text (it may need JavaScript)")
