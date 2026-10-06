@@ -163,16 +163,3 @@ def test_delete_session_removes_messages(client, user, fake_gemini, db):
 def test_chat_requires_auth_401(client):
     assert client.post("/api/v1/chat", json={"message": "hi"}).status_code == 401
     assert client.get("/api/v1/chat/sessions").status_code == 401
-
-
-def test_delete_all_sessions_keeps_other_users(client, user, other_users_session, fake_gemini, db):
-    chat(client, user, "hello")
-    chat(client, user, "hi")
-    assert client.delete("/api/v1/chat/sessions", headers=user).status_code == 204
-    assert client.get("/api/v1/chat/sessions", headers=user).json() == []
-    assert db.scalars(select(ChatSession.id)).all() == [uuid.UUID(other_users_session)]
-    assert count(db, ChatMessage) == 2
-
-
-def test_delete_all_sessions_requires_auth_401(client):
-    assert client.delete("/api/v1/chat/sessions").status_code == 401

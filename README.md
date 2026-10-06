@@ -25,8 +25,8 @@ React ──REST /api/v1──▶ FastAPI ──▶ rag.py ──▶ gemini.py �
 - Conversation memory: follow-up questions are rewritten into standalone questions
 - Add or delete single documents without re-embedding everything. Identical uploads are
   detected.
-- User and admin roles (JWT). Users can only see their own conversations, and can delete
-  one conversation or all of them.
+- User and admin roles (JWT). Users can only see their own conversations and can delete any
+  of them (the × next to each chat in the sidebar).
 - Request, ingestion and chat-turn logging
 
 ## Prerequisites

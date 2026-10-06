@@ -66,47 +66,43 @@ describe('ChatPage', () => {
     expect(api.getSession).toHaveBeenCalledTimes(2)
   })
 
-  it('goes back to a new chat when the session no longer exists', async () => {
-    const { ApiError } = await import('../api/client')
-    api.getSession.mockRejectedValue(new ApiError(404, 'Session not found'))
-    renderPage('/chat/missing')
-    expect(await screen.findByText('Ask anything from the knowledge base.')).toBeInTheDocument()
-  })
-})
-
-describe('ChatPage delete all', () => {
-  beforeEach(() => {
-    vi.resetAllMocks()
-  })
-
-  it('deletes every conversation after confirmation', async () => {
+  it('deletes a single conversation after confirmation', async () => {
     api.listSessions
       .mockResolvedValueOnce([
         { id: 'A', title: 'First question', created_at: '', updated_at: '' },
         { id: 'B', title: 'Second question', created_at: '', updated_at: '' },
       ])
-      .mockResolvedValue([])
-    api.deleteAllSessions.mockResolvedValue(undefined)
+      .mockResolvedValue([{ id: 'B', title: 'Second question', created_at: '', updated_at: '' }])
+    api.getSession.mockResolvedValue(session(firstExchange))
+    api.deleteSession.mockResolvedValue(undefined)
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     const user = userEvent.setup()
-    renderPage('/chat')
+    renderPage('/chat/A')
+    expect(await screen.findByText('First answer')).toBeInTheDocument()
 
-    await user.click(await screen.findByRole('button', { name: /delete all chats/i }))
-    expect(api.deleteAllSessions).toHaveBeenCalledTimes(1)
-    expect(await screen.findByText('No conversations yet.')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /delete all chats/i })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Delete conversation First question' }))
+    expect(api.deleteSession).toHaveBeenCalledWith('A')
+    expect(await screen.findByText('Ask anything from the knowledge base.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'First question' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Second question' })).toBeInTheDocument()
   })
 
-  it('keeps conversations when the confirmation is cancelled', async () => {
-    api.listSessions.mockResolvedValue([
-      { id: 'A', title: 'First question', created_at: '', updated_at: '' },
-    ])
+  it('keeps the conversation when the deletion is cancelled', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false)
     const user = userEvent.setup()
     renderPage('/chat')
 
-    await user.click(await screen.findByRole('button', { name: /delete all chats/i }))
-    expect(api.deleteAllSessions).not.toHaveBeenCalled()
+    await user.click(
+      await screen.findByRole('button', { name: 'Delete conversation First question' }),
+    )
+    expect(api.deleteSession).not.toHaveBeenCalled()
     expect(screen.getByRole('link', { name: 'First question' })).toBeInTheDocument()
+  })
+
+  it('goes back to a new chat when the session no longer exists', async () => {
+    const { ApiError } = await import('../api/client')
+    api.getSession.mockRejectedValue(new ApiError(404, 'Session not found'))
+    renderPage('/chat/missing')
+    expect(await screen.findByText('Ask anything from the knowledge base.')).toBeInTheDocument()
   })
 })
