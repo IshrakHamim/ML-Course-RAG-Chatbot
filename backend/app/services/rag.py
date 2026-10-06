@@ -55,6 +55,7 @@ class Source:
     source_type: str
     page: int | None
     url: str | None
+    document_id: str | None = None  # a string so the source can be stored as JSON
 
 
 @dataclass
@@ -108,7 +109,9 @@ def _sources(chunks: list[RetrievedChunk]) -> list[Source]:
         key = (chunk.title, chunk.page, url)
         if key not in seen:
             seen.add(key)
-            sources.append(Source(chunk.title, chunk.source_type, chunk.page, url))
+            sources.append(
+                Source(chunk.title, chunk.source_type, chunk.page, url, str(chunk.document_id))
+            )
     return sources
 
 

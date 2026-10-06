@@ -15,6 +15,8 @@ export interface TokenResponse {
 }
 
 export interface Source {
+  // Missing on answers saved before PDFs could be viewed.
+  document_id?: string | null
   title: string
   source_type: string
   page: number | null
@@ -61,4 +63,5 @@ export interface DocumentItem {
   chunk_count: number
   created_at: string
   duplicate: boolean
+  has_file: boolean
 }

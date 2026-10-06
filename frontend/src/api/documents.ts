@@ -1,4 +1,4 @@
-import { apiFetch } from './client'
+import { apiFetch, apiFetchBlob } from './client'
 import type { DocumentItem } from './types'
 
 export function listDocuments(): Promise<DocumentItem[]> {
@@ -18,4 +18,8 @@ export function addUrl(url: string): Promise<DocumentItem> {
 
 export function deleteDocument(id: string): Promise<void> {
   return apiFetch(`/documents/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
+export function getDocumentFile(id: string): Promise<Blob> {
+  return apiFetchBlob(`/documents/${encodeURIComponent(id)}/file`)
 }

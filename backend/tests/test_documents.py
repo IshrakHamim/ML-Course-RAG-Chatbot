@@ -216,3 +216,44 @@ def test_cli_reindex(client, admin, fake_gemini, db, capsys):
     assert cli.main(["reindex"]) == 0
     assert "Re-embedded" in capsys.readouterr().out
     assert documents.count_stale_chunks(db) == 0
+
+
+def test_pdf_file_can_be_viewed_by_any_user(client, admin, user, fake_gemini):
+    data = text_pdf(["Page one text.", "Page two text."])
+    document_id = upload(client, admin, "guide.pdf", data).json()["id"]
+    listed = client.get("/api/v1/documents", headers=admin).json()
+    assert listed[0]["has_file"] is True
+    response = client.get(f"/api/v1/documents/{document_id}/file", headers=user)
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.headers["content-disposition"] == "inline; filename*=UTF-8''guide.pdf"
+    assert response.content == data
+
+
+def test_text_document_has_no_file_404(client, admin, fake_gemini):
+    document_id = upload(client, admin).json()["id"]
+    assert client.get("/api/v1/documents", headers=admin).json()[0]["has_file"] is False
+    response = client.get(f"/api/v1/documents/{document_id}/file", headers=admin)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Document file not found"
+
+
+def test_missing_document_file_404(client, user):
+    assert client.get(f"/api/v1/documents/{uuid.uuid4()}/file", headers=user).status_code == 404
+
+
+def test_document_file_requires_login_401(client):
+    assert client.get(f"/api/v1/documents/{uuid.uuid4()}/file").status_code == 401
+
+
+def test_reupload_adds_file_to_older_pdf_document(client, admin, fake_gemini, db):
+    data = text_pdf(["Page one text."])
+    document_id = upload(client, admin, "guide.pdf", data).json()["id"]
+    db.execute(update(Document).values(file_data=None))
+    db.commit()
+    response = upload(client, admin, "guide.pdf", data)
+    assert response.status_code == 200
+    assert response.json()["duplicate"] is True
+    assert response.json()["has_file"] is True
+    assert client.get(f"/api/v1/documents/{document_id}/file", headers=admin).content == data
+    assert count(db, Document) == 1

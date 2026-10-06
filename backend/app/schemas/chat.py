@@ -24,6 +24,7 @@ class ChatRequest(BaseModel):
 
 
 class SourceOut(BaseModel):
+    document_id: uuid.UUID | None = None
     title: str
     source_type: str
     page: int | None = None

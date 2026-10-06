@@ -57,6 +57,7 @@ class ExtractedDoc:
     source_type: Literal["pdf", "text", "url"]
     source: str
     sections: list[Section]
+    file_data: bytes | None = None  # original PDF bytes, kept for viewing
 
 
 @dataclass
@@ -168,7 +169,7 @@ def load_upload(filename: str, data: bytes) -> ExtractedDoc:
         raise IngestionError(422, "The file is empty")
     title = path.stem or name
     if extension == ".pdf":
-        return ExtractedDoc(title, "pdf", name, _pdf_sections(data))
+        return ExtractedDoc(title, "pdf", name, _pdf_sections(data), file_data=data)
     text = clean_text(data.decode("utf-8", errors="replace").removeprefix("﻿"))
     if not text:
         raise IngestionError(422, "The file has no text")

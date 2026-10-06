@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { addUrl, deleteDocument, listDocuments, uploadDocument } from '../api/documents'
 import type { DocumentItem } from '../api/types'
+import { PdfViewer } from '../components/PdfViewer'
 import { Spinner } from '../components/Spinner'
 
 const MAX_UPLOAD_MB = 10
@@ -31,6 +32,7 @@ export function AdminPage() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [fileInputKey, setFileInputKey] = useState(0)
+  const [viewing, setViewing] = useState<DocumentItem | null>(null)
 
   const refresh = useCallback(() => {
     listDocuments()
@@ -182,19 +184,34 @@ export function AdminPage() {
                 <td>{doc.chunk_count}</td>
                 <td>{new Date(doc.created_at).toLocaleString()}</td>
                 <td>
-                  <button
-                    type="button"
-                    className="danger"
-                    aria-label={`Delete ${doc.title}`}
-                    onClick={() => void handleDelete(doc)}
-                  >
-                    Delete
-                  </button>
+                  <div className="row-actions">
+                    {doc.has_file && (
+                      <button
+                        type="button"
+                        className="secondary"
+                        aria-label={`View ${doc.title}`}
+                        onClick={() => setViewing(doc)}
+                      >
+                        View
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="danger"
+                      aria-label={`Delete ${doc.title}`}
+                      onClick={() => void handleDelete(doc)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      )}
+      {viewing && (
+        <PdfViewer documentId={viewing.id} title={viewing.title} onClose={() => setViewing(null)} />
       )}
     </main>
   )

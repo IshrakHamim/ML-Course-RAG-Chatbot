@@ -13,6 +13,7 @@ class DocumentOut(BaseModel):
     source: str
     chunk_count: int
     created_at: datetime
+    has_file: bool = False
     duplicate: bool = False
 
 

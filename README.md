@@ -19,6 +19,9 @@ React ──REST /api/v1──▶ FastAPI ──▶ rag.py ──▶ gemini.py �
 
 - Upload PDF, TXT and Markdown files, or add a web page by URL (admin only)
 - Answers grounded in the retrieved chunks, with source citations (title, page or URL)
+- View knowledge-base PDFs inside the app: click a PDF source under an answer to open it at
+  the cited page, or use **View** on the Knowledge base page. PDFs uploaded before this
+  feature need to be uploaded again once to store the file.
 - Polite "not found in the knowledge base" fallback for off-topic questions, without calling
   the chat model
 - Friendly replies to greetings and thanks

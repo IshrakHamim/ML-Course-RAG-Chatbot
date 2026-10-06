@@ -186,6 +186,7 @@ The key only authenticates you. **Which model runs is set by config**, not by th
   - `POST /chat` with `{ session_id?, message }` → `{ answer, sources[], session_id, grounded, kind }`, where `kind` is `answer`, `fallback` or `greeting`. The UI styles replies by `kind`, so greetings never look like "not found"
   - `GET /chat/sessions`, `GET /chat/sessions/{id}`, `DELETE /chat/sessions/{id}`
   - `POST /documents` (upload), `POST /documents/url`, `GET /documents`, `DELETE /documents/{id}` (admin only)
+  - `GET /documents/{id}/file` returns the original PDF for viewing (any logged-in user). Uploaded PDFs are stored in `documents.file_data`
   - `GET /health` (checks the DB)
 - Every endpoint has Pydantic request/response models, a `summary`, and `tags`, so **Swagger at `/docs`** works as the API documentation.
 - Input validation: empty or whitespace-only message → 422; message longer than `MAX_MESSAGE_CHARS` (2000) → 422.

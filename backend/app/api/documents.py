@@ -1,9 +1,10 @@
 import uuid
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_admin
+from app.api.deps import get_current_user, require_admin
 from app.core.config import get_settings
 from app.core.db import get_db
 from app.models import User
@@ -94,3 +95,26 @@ def delete_document(
 ) -> Response:
     documents.delete_document(db, document_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/{document_id}/file",
+    response_class=Response,
+    summary="View the original PDF of a document (any logged-in user)",
+    responses={
+        200: {"content": {"application/pdf": {}}, "description": "The PDF file"},
+        404: {"description": "Document or file not found"},
+    },
+)
+def get_document_file(
+    document_id: uuid.UUID, db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> Response:
+    document = documents.get_file(db, document_id)
+    return Response(
+        content=document.file_data,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f"inline; filename*=UTF-8''{quote(document.source)}",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )

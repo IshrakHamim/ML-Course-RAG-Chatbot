@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import func, select
 
 from app.core.errors import AI_BUSY_MESSAGE, AIServiceError
-from app.models import ChatMessage, ChatSession
+from app.models import ChatMessage, ChatSession, Document
 from app.services.rag import FALLBACK_ANSWER
 
 LATE_QUESTION = "What is the late submission policy?"
@@ -28,8 +28,15 @@ def test_chat_creates_session_and_returns_id(client, user, seeded_kb, fake_gemin
     assert body["answer"] == fake_gemini.answer
     assert body["grounded"] is True
     assert body["kind"] == "answer"
+    document_id = str(db.scalar(select(Document.id)))
     assert body["sources"] == [
-        {"title": "Course Handbook", "source_type": "text", "page": None, "url": None}
+        {
+            "document_id": document_id,
+            "title": "Course Handbook",
+            "source_type": "text",
+            "page": None,
+            "url": None,
+        }
     ]
     uuid.UUID(body["session_id"])
     assert count(db, ChatSession) == 1
@@ -68,6 +75,7 @@ def test_session_detail_lists_messages_in_order(client, user, seeded_kb, fake_ge
         ("assistant", "answer"),
     ]
     assert body["messages"][3]["sources"][0]["title"] == "Course Handbook"
+    assert body["messages"][3]["sources"][0]["document_id"] is not None
 
 
 def test_session_title_truncated(client, user, fake_gemini):

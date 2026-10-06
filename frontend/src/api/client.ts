@@ -59,7 +59,7 @@ async function errorMessage(response: Response): Promise<string> {
   return `Request failed (${response.status})`
 }
 
-export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function request(path: string, options: RequestOptions): Promise<Response> {
   const { json, headers: initHeaders, ...init } = options
   const headers = new Headers(initHeaders)
   const token = getToken()
@@ -85,6 +85,16 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     }
     throw new ApiError(response.status, message)
   }
+  return response
+}
+
+export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await request(path, options)
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
+}
+
+// For binary responses such as PDFs: the token can't go in a plain link, so fetch the bytes.
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  return (await request(path, {})).blob()
 }

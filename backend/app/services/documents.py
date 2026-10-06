@@ -34,6 +34,10 @@ def ingest(db: Session, doc: ExtractedDoc, user_id: uuid.UUID | None) -> IngestR
     existing = _find_by_hash(db, digest)
     if existing is not None:
         logger.info("Document already ingested title=%r id=%s", doc.title, existing.id)
+        if doc.file_data is not None and not existing.has_file:
+            # Documents added before PDFs were stored get their file on re-upload.
+            existing.file_data = doc.file_data
+            db.commit()
         return IngestResult(existing, created=False)
 
     start = time.perf_counter()
@@ -53,6 +57,7 @@ def ingest(db: Session, doc: ExtractedDoc, user_id: uuid.UUID | None) -> IngestR
         content_hash=digest,
         chunk_count=len(drafts),
         created_by=user_id,
+        file_data=doc.file_data,
         chunks=[
             Chunk(
                 chunk_index=draft.chunk_index,
@@ -82,6 +87,13 @@ def ingest(db: Session, doc: ExtractedDoc, user_id: uuid.UUID | None) -> IngestR
 
 def list_documents(db: Session) -> list[Document]:
     return list(db.scalars(select(Document).order_by(Document.created_at.desc())))
+
+
+def get_file(db: Session, document_id: uuid.UUID) -> Document:
+    document = db.get(Document, document_id)
+    if document is None or not document.has_file:
+        raise NotFoundError("Document file not found")
+    return document
 
 
 def delete_document(db: Session, document_id: uuid.UUID) -> None:

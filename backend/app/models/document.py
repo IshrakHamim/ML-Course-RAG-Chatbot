@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime
 
 from pgvector.sqlalchemy import Vector
-from sqlalchemy import CheckConstraint, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import CheckConstraint, ForeignKey, Integer, LargeBinary, String, Text
+from sqlalchemy.orm import Mapped, column_property, mapped_column, relationship
 
 from app.core.config import get_settings
 from app.models.base import Base, UUIDPrimaryKey, created_at_column
@@ -24,6 +24,9 @@ class Document(UUIDPrimaryKey, Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     created_at: Mapped[datetime] = created_at_column()
+    # The original PDF, so it can be viewed in the app. Deferred: only loaded when served.
+    file_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
+    has_file: Mapped[bool] = column_property(file_data.is_not(None))
 
     chunks: Mapped[list["Chunk"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", passive_deletes=True

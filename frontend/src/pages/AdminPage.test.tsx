@@ -17,6 +17,7 @@ const handbook: DocumentItem = {
   chunk_count: 12,
   created_at: '2026-10-06T10:00:00Z',
   duplicate: false,
+  has_file: true,
 }
 
 function file(name: string, size = 100): File {
@@ -35,6 +36,8 @@ describe('AdminPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     api.listDocuments.mockResolvedValue([handbook])
+    URL.createObjectURL = vi.fn(() => 'blob:pdf-1')
+    URL.revokeObjectURL = vi.fn()
   })
 
   it('lists documents with title, type, chunk count', async () => {
@@ -42,6 +45,24 @@ describe('AdminPage', () => {
     const row = screen.getByRole('row', { name: /Course Handbook/ })
     expect(within(row).getByText('PDF')).toBeInTheDocument()
     expect(within(row).getByText('12')).toBeInTheDocument()
+  })
+
+  it('opens the PDF in the viewer', async () => {
+    api.getDocumentFile.mockResolvedValue(new Blob(['%PDF'], { type: 'application/pdf' }))
+    const user = await setup()
+    await user.click(screen.getByRole('button', { name: 'View Course Handbook' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Course Handbook' })
+    expect(api.getDocumentFile).toHaveBeenCalledWith('d1')
+    expect(await within(dialog).findByTitle('Course Handbook')).toHaveAttribute('src', 'blob:pdf-1')
+    await user.click(within(dialog).getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:pdf-1')
+  })
+
+  it('has no View button for documents without a stored file', async () => {
+    api.listDocuments.mockResolvedValue([{ ...handbook, source_type: 'text', has_file: false }])
+    await setup()
+    expect(screen.queryByRole('button', { name: /view/i })).not.toBeInTheDocument()
   })
 
   it('shows an empty state', async () => {
