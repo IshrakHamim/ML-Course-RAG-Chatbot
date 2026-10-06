@@ -4,27 +4,16 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
 from sqlalchemy.exc import OperationalError
 
 from app.api import auth, chat, documents, health
-from app.core.config import Settings, get_settings
+from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import setup_logging
 from app.services.documents import count_stale_chunks
 
 logger = logging.getLogger(__name__)
 API_PREFIX = "/api/v1"
-
-
-def _load_settings() -> Settings:
-    try:
-        return get_settings()
-    except ValidationError as exc:
-        setup_logging("INFO")
-        problems = "; ".join(error["msg"].removeprefix("Value error, ") for error in exc.errors())
-        logger.error("Invalid configuration: %s", problems)
-        raise SystemExit(1) from None
 
 
 def _warn_about_stale_chunks() -> None:
@@ -50,7 +39,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    settings = _load_settings()
+    settings = get_settings()
     setup_logging(settings.log_level)
 
     app = FastAPI(

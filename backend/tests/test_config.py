@@ -44,3 +44,20 @@ def test_min_score_range():
 def test_cors_origins_split():
     settings = make_settings(cors_origins="http://a.com, http://b.com")
     assert settings.cors_origin_list == ["http://a.com", "http://b.com"]
+
+
+def test_get_settings_exits_with_clear_message(monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    get_settings.cache_clear()
+    try:
+        with pytest.raises(SystemExit) as exc:
+            get_settings()
+    finally:
+        monkeypatch.undo()
+        get_settings.cache_clear()
+    message = str(exc.value.code)
+    assert message.startswith("Invalid configuration in .env:")
+    assert "GEMINI_API_KEY is missing" in message
+    assert "Traceback" not in message

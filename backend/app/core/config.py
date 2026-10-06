@@ -1,7 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr, field_validator, model_validator
+from pydantic import Field, SecretStr, ValidationError, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -60,4 +60,16 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    """Load settings once. Invalid or missing values stop the process with a readable message."""
+    try:
+        return Settings()
+    except ValidationError as exc:
+        problems = []
+        for error in exc.errors():
+            message = error["msg"].removeprefix("Value error, ")
+            if error["type"] == "missing":
+                message = f"{str(error['loc'][0]).upper()} is missing"
+            elif error["loc"] and not message.startswith(str(error["loc"][0]).upper()):
+                message = f"{str(error['loc'][0]).upper()}: {message}"
+            problems.append(message)
+        raise SystemExit("Invalid configuration in .env: " + "; ".join(problems)) from None
