@@ -101,14 +101,14 @@ React (Vite) ──HTTP/JSON──▶ FastAPI ──▶ rag.py ──▶ gemini.
 ### API key
 
 - The key lives **only** in `.env` as `GEMINI_API_KEY`. Never put it in code, tests, docs, commits, PR text, or frontend code.
-- **Key type:** standard Google AI Studio keys start with `AIza...`. The key supplied with this project starts with `AQ.`, which is a different format and likely a **Vertex AI (express mode)** key. The `google-genai` SDK talks to a different endpoint depending on the key type:
+- **Key type:** Google AI Studio keys start with `AIza...` or, for newer keys, `AQ.`. Vertex AI express-mode keys can also start with `AQ.`, so the prefix alone doesn't tell you which kind you have. The `google-genai` SDK talks to a different endpoint for each:
   ```python
-  # AI Studio key (AIza...)
+  # Google AI Studio key
   client = genai.Client(api_key=settings.gemini_api_key)
-  # Vertex AI express-mode key (AQ....)
+  # Vertex AI express-mode key
   client = genai.Client(vertexai=True, api_key=settings.gemini_api_key)
   ```
-  Control this with `GEMINI_USE_VERTEX=true|false`. If calls fail with 401/403 ("API key not valid"), try the other mode first.
+  Control this with `GEMINI_USE_VERTEX=true|false`. **The key supplied with this project is an AI Studio key: use `GEMINI_USE_VERTEX=false`.** In Vertex mode it fails with 403 "API has not been used in project … or it is disabled". If calls fail with 401/403, try the other mode first.
 - `python -m app.cli check-gemini` must: (1) make one tiny generate call, (2) make one embed call and print the vector length, then one batch embed call, (3) print clear, actionable errors (wrong key type, model not found, quota exceeded). Run it before the first ingestion and before every demo.
 
 ### Models
@@ -117,7 +117,7 @@ The key only authenticates you. **Which model runs is set by config**, not by th
 
 | Purpose          | Env var                  | Default                | Notes |
 | ---------------- | ------------------------ | ---------------------- | ----- |
-| Chat / answers   | `GEMINI_CHAT_MODEL`      | `gemini-2.5-flash`     | Fast and cheap, good enough for grounded Q&A |
+| Chat / answers   | `GEMINI_CHAT_MODEL`      | `gemini-3.8-flash`     | Fast and cheap, good enough for grounded Q&A. `gemini-2.5-flash` is no longer offered to new keys |
 | Embeddings       | `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-001` | Request `output_dimensionality=768` |
 
 - Model availability changes over time and differs between AI Studio and Vertex. If `check-gemini` reports "model not found", list the models available to the key and update `.env`. Don't hard-code model names in code.
@@ -204,8 +204,8 @@ All settings come from `.env` via `pydantic-settings`. Keep `.env.example` in sy
 
 ```
 GEMINI_API_KEY=
-GEMINI_USE_VERTEX=true                 # true for AQ.... keys, false for AIza... keys
-GEMINI_CHAT_MODEL=gemini-2.5-flash
+GEMINI_USE_VERTEX=false                # false for Google AI Studio keys (AIza... and newer AQ.... keys); true for Vertex AI express keys
+GEMINI_CHAT_MODEL=gemini-3.8-flash
 GEMINI_EMBEDDING_MODEL=gemini-embedding-001
 EMBEDDING_DIM=768
 EMBED_BATCH_SIZE=50                    # set to 1 if check-gemini says batching is unsupported
@@ -213,7 +213,7 @@ DATABASE_URL=postgresql+psycopg://rag:rag@localhost:5432/ragbot
 JWT_SECRET=                            # any long random string
 JWT_EXPIRE_MINUTES=120
 RAG_TOP_K=5
-RAG_MIN_SCORE=0.6                      # tune with sample questions
+RAG_MIN_SCORE=0.59                     # tuned with docs/eval_questions.md
 CHUNK_SIZE=3000
 CHUNK_OVERLAP=400
 MEMORY_TURNS=6

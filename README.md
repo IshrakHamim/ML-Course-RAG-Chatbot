@@ -36,8 +36,8 @@ React ──REST /api/v1──▶ FastAPI ──▶ rag.py ──▶ gemini.py �
 | Node.js | 22+ | `brew install node@22` |
 | Docker | any | Docker Desktop, or `brew install colima docker docker-compose && colima start` |
 
-You also need a Gemini API key: either a Google AI Studio key (`AIza…`) or a Vertex AI
-express-mode key (`AQ.…`).
+You also need a Gemini API key. A Google AI Studio key (`AIza…`, or the newer `AQ.…` format)
+uses `GEMINI_USE_VERTEX=false`. A Vertex AI express-mode key uses `true`.
 
 ## Setup
 
@@ -45,7 +45,7 @@ express-mode key (`AQ.…`).
 # 1. Configuration
 cp .env.example .env
 #    Edit .env: set GEMINI_API_KEY, JWT_SECRET (32+ random characters) and
-#    GEMINI_USE_VERTEX (true for AQ.… keys, false for AIza… keys).
+#    GEMINI_USE_VERTEX (false for Google AI Studio keys, true for Vertex AI express keys).
 #    Generate a secret with: python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 
 # 2. Database
@@ -81,9 +81,9 @@ Run these from `backend/` with the virtual environment active:
 
 ## Tuning the relevance threshold
 
-`RAG_MIN_SCORE` (default `0.6`) decides when a question counts as "not in the knowledge base".
+`RAG_MIN_SCORE` (tuned to `0.59` for the sample data) decides when a question counts as "not in the knowledge base".
 After ingesting the sample data, run the questions in
-[sample_data/eval_questions.md](sample_data/eval_questions.md) through `python -m app.cli search`,
+[docs/eval_questions.md](docs/eval_questions.md) through `python -m app.cli search`,
 note the top scores, and set the threshold between the in-scope and out-of-scope groups.
 
 ## Tests and linting
@@ -116,7 +116,7 @@ cd frontend && npm run lint && npm test && npm run build
 | Symptom | Fix |
 |---------|-----|
 | "The AI service is busy, please try again." | Free-tier quota (429). Wait a minute. Ingestion retries automatically. |
-| `check-gemini` reports the key was rejected | Flip `GEMINI_USE_VERTEX` (`true` for `AQ.…` keys, `false` for `AIza…`). |
+| `check-gemini` reports the key was rejected, or 403 "API has not been used in project" | Flip `GEMINI_USE_VERTEX`. AI Studio keys (including newer `AQ.…` ones) need `false`. |
 | `check-gemini` reports "model not found" | Check `GEMINI_CHAT_MODEL` and `GEMINI_EMBEDDING_MODEL` against the models your key can use. |
 | `check-gemini` reports that batch embedding failed | Set `EMBED_BATCH_SIZE=1` in `.env`. |
 | Backend exits with "Invalid configuration" | A required `.env` value is missing or invalid; the log names it. |

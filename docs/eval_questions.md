@@ -21,22 +21,27 @@ between the **lowest in-scope** score and the **highest out-of-scope** score.
 
 | # | Question | Expected source | Top score |
 |---|----------|-----------------|-----------|
-| 1 | What is the late submission policy for lab assignments? | handbook, p. 3 | |
-| 2 | When are Dr. Okonkwo-Lindqvist's office hours? | handbook, p. 1 | |
-| 3 | How much does the final project count towards the grade? | handbook, p. 2 | |
-| 4 | How many GPU hours does each student get on the Orca cluster? | handbook, p. 5 | |
-| 5 | What are the library opening hours during exam weeks? | student_services | |
-| 6 | What does RAG stand for and what problem does it solve? | Wikipedia URL | |
+| 1 | What is the late submission policy for lab assignments? | handbook, p. 3 | 0.752 |
+| 2 | When are Dr. Okonkwo-Lindqvist's office hours? | handbook, p. 1 | 0.641 |
+| 3 | How much does the final project count towards the grade? | handbook, p. 2 (top hit p. 4) | 0.729 |
+| 4 | How many GPU hours does each student get on the Orca cluster? | handbook, p. 5 | 0.691 |
+| 5 | What are the library opening hours during exam weeks? | student_services | 0.657 |
+| 6 | What does RAG stand for and what problem does it solve? | Wikipedia URL | 0.710 |
 
 ## Out of scope (should get the polite "not found" fallback)
 
 | # | Question | Top score |
 |---|----------|-----------|
-| 1 | What is the capital of Australia? | |
-| 2 | Write a poem about cats. | |
-| 3 | Who won the 2018 FIFA World Cup? | |
-| 4 | How do I bake sourdough bread? | |
-| 5 | What is the boiling point of nitrogen? | |
+| 1 | What is the capital of Australia? | 0.498 |
+| 2 | Write a poem about cats. | 0.548 |
+| 3 | Who won the 2018 FIFA World Cup? | 0.469 |
+| 4 | How do I bake sourdough bread? | 0.493 |
+| 5 | What is the boiling point of nitrogen? | 0.517 |
+
+## Result (2026-10-06, gemini-embedding-001, 768 dimensions)
+
+Lowest in-scope score 0.641, highest out-of-scope score 0.548, so `RAG_MIN_SCORE=0.59`.
+Re-run this after adding documents or changing the embedding model.
 
 ## Follow-up (conversation memory)
 
