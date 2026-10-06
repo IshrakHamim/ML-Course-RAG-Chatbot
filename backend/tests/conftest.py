@@ -48,6 +48,18 @@ def _database():
 
 
 @pytest.fixture(autouse=True)
+def _restore_logging():
+    """cli.main() reconfigures logging; under capsys that binds handlers to a temporary stream."""
+    import logging
+
+    root = logging.getLogger()
+    handlers, level = root.handlers[:], root.level
+    yield
+    root.handlers[:] = handlers
+    root.setLevel(level)
+
+
+@pytest.fixture(autouse=True)
 def _clean_tables():
     yield
     from app.core.db import engine
