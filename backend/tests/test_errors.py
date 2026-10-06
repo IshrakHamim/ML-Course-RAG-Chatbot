@@ -29,3 +29,14 @@ def test_cors_allows_only_configured_origin(client):
     assert "access-control-allow-origin" not in evil.headers
     good = client.get("/api/v1/health", headers={"Origin": "http://localhost:5173"})
     assert good.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+def test_unexpected_500_keeps_cors_headers(client):
+    def boom():
+        raise RuntimeError("secret detail")
+
+    client.app.add_api_route("/_test/crash-cors", boom)
+    response = client.get("/_test/crash-cors", headers={"Origin": "http://localhost:5173"})
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Internal server error"}
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"

@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
 from app.api import auth, chat, documents, health
@@ -48,23 +49,29 @@ def create_app() -> FastAPI:
         description="Answers questions only from the uploaded knowledge base.",
         lifespan=lifespan,
     )
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origin_list,
-        allow_methods=["*"],
-        allow_headers=["Authorization", "Content-Type"],
-    )
 
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
         start = time.perf_counter()
-        response = await call_next(request)
+        try:
+            response = await call_next(request)
+        except Exception:
+            # Handle it here, inside the CORS middleware, so the browser can read the 500.
+            logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+            response = JSONResponse(status_code=500, content={"detail": "Internal server error"})
         elapsed_ms = (time.perf_counter() - start) * 1000
         logger.info(
             "%s %s %s %.0fms", request.method, request.url.path, response.status_code, elapsed_ms
         )
         return response
 
+    # Added last so it is the outermost middleware and every response gets CORS headers.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origin_list,
+        allow_methods=["*"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
     register_exception_handlers(app)
     app.include_router(health.router, prefix=API_PREFIX)
     app.include_router(auth.router, prefix=API_PREFIX)
