@@ -23,6 +23,7 @@ TIMEOUT_MS = 30_000
 MAX_ATTEMPTS = 4
 TEMPERATURE = 0.2
 _sleep = time.sleep
+_single_input_only = False  # set when the model rejects multi-text embed calls
 T = TypeVar("T")
 
 
@@ -50,6 +51,8 @@ def _error_kind(exc: errors.APIError) -> str:
         return "auth"
     if exc.code == 404:
         return "model_not_found"
+    if 400 <= exc.code < 500:
+        return "bad_request"
     return "unavailable"
 
 
@@ -113,10 +116,23 @@ def _embed_batch(texts: list[str], task_type: TaskType) -> list[list[float]]:
 
 
 def embed_texts(texts: list[str], task_type: TaskType) -> list[list[float]]:
-    size = get_settings().embed_batch_size
+    """Embed in batches of EMBED_BATCH_SIZE. If the model rejects a multi-text batch (some
+    Vertex AI models accept one text per call), switch to one text per call for this process."""
+    global _single_input_only
+    size = 1 if _single_input_only else get_settings().embed_batch_size
     vectors: list[list[float]] = []
-    for start in range(0, len(texts), size):
-        vectors.extend(_embed_batch(texts[start : start + size], task_type))
+    start = 0
+    while start < len(texts):
+        batch = texts[start : start + size]
+        try:
+            vectors.extend(_embed_batch(batch, task_type))
+        except AIServiceError as exc:
+            if exc.kind != "bad_request" or len(batch) == 1:
+                raise
+            logger.warning("Batch embedding rejected; falling back to one text per call")
+            _single_input_only, size = True, 1
+            continue
+        start += len(batch)
     return vectors
 
 
@@ -150,6 +166,7 @@ HINTS = {
     "model_not_found": "Model not found: check GEMINI_CHAT_MODEL / GEMINI_EMBEDDING_MODEL in .env "
     "and the models available to this key.",
     "timeout": "The request timed out: check your network connection and try again.",
+    "bad_request": "Gemini rejected the request; see the message above.",
     "unavailable": "The Gemini service returned an error; see the message above.",
     "empty": "Gemini returned an empty response.",
 }

@@ -131,7 +131,7 @@ def test_400_not_retried(stub):
     stub.embed_script = [api_error(400, "bad request")]
     with pytest.raises(AIServiceError) as exc:
         gemini.embed_query("q")
-    assert exc.value.kind == "unavailable"
+    assert exc.value.kind == "bad_request"
     assert len(stub.embed_requests) == 1
 
 
@@ -234,3 +234,20 @@ def test_cli_check_gemini_dispatch(monkeypatch):
 
     monkeypatch.setattr(gemini, "run_check", lambda: 0)
     assert cli.main(["check-gemini"]) == 0
+
+
+def test_batch_rejected_falls_back_to_one_text_per_call(stub, monkeypatch):
+    monkeypatch.setattr(gemini, "_single_input_only", False)
+    stub.embed_script = [api_error(400, "only one input is supported")]
+    vectors = gemini.embed_texts(["a", "b", "c"], "RETRIEVAL_DOCUMENT")
+    assert len(vectors) == 3
+    assert [len(r.contents) for r in stub.embed_requests] == [3, 1, 1, 1]
+    gemini.embed_texts(["d", "e"], "RETRIEVAL_DOCUMENT")
+    assert [len(r.contents) for r in stub.embed_requests][4:] == [1, 1]
+
+
+def test_single_text_400_still_raises(stub, monkeypatch):
+    monkeypatch.setattr(gemini, "_single_input_only", False)
+    stub.embed_script = [api_error(400, "bad"), api_error(400, "bad")]
+    with pytest.raises(AIServiceError):
+        gemini.embed_texts(["a"], "RETRIEVAL_DOCUMENT")

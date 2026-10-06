@@ -10,8 +10,8 @@ AI_BUSY_MESSAGE = "The AI service is busy, please try again."
 
 
 class AIServiceError(Exception):
-    """A Gemini call failed. `kind` is one of: quota, auth, model_not_found, timeout,
-    empty, dimension, unavailable."""
+    """A Gemini call failed. `kind` is one of: quota, auth, model_not_found, bad_request,
+    timeout, empty, dimension, unavailable."""
 
     def __init__(self, kind: str, detail: str = "") -> None:
         super().__init__(f"{kind}: {detail}" if detail else kind)
