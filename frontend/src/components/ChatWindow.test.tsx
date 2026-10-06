@@ -41,6 +41,20 @@ describe('ChatWindow', () => {
     expect(screen.getByText('What is the late policy?')).toBeInTheDocument()
   })
 
+  it('greets with a Hello heading when the conversation is empty', () => {
+    setup()
+    expect(screen.getByRole('heading', { name: /hello/i })).toBeInTheDocument()
+  })
+
+  it('makes the composer glow while thinking', async () => {
+    sendMessage.mockReturnValue(new Promise(() => {}))
+    const { user } = setup()
+    const composer = screen.getByRole('textbox', { name: /message/i }).closest('form')!
+    expect(composer).toHaveAttribute('data-state', 'idle')
+    await user.type(input(), 'late policy?{Enter}')
+    expect(composer).toHaveAttribute('data-state', 'thinking')
+  })
+
   it('does not send empty or whitespace input', async () => {
     const { user } = setup()
     expect(sendButton()).toBeDisabled()
