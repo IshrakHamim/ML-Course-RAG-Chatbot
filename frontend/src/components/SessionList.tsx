@@ -18,6 +18,7 @@ export function SessionList({ sessions, onDelete }: SessionListProps) {
           <button
             type="button"
             className="icon"
+            title="Delete conversation"
             aria-label={`Delete conversation ${session.title}`}
             onClick={() => {
               if (window.confirm('Delete this conversation?')) onDelete(session.id)

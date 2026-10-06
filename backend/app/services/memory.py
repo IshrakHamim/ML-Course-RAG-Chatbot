@@ -79,3 +79,11 @@ def list_sessions(db: Session, user_id: uuid.UUID) -> list[ChatSession]:
 def delete_session(db: Session, user_id: uuid.UUID, session_id: uuid.UUID) -> None:
     db.delete(get_session(db, user_id, session_id))
     db.commit()
+
+
+def delete_all_sessions(db: Session, user_id: uuid.UUID) -> int:
+    sessions = list_sessions(db, user_id)
+    for session in sessions:
+        db.delete(session)
+    db.commit()
+    return len(sessions)

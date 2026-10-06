@@ -16,3 +16,7 @@ export function getSession(id: string): Promise<SessionDetail> {
 export function deleteSession(id: string): Promise<void> {
   return apiFetch(`/chat/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' })
 }
+
+export function deleteAllSessions(): Promise<void> {
+  return apiFetch('/chat/sessions', { method: 'DELETE' })
+}

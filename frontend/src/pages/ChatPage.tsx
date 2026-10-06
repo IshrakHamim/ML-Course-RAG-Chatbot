@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { deleteSession, getSession, listSessions } from '../api/chat'
+import { deleteAllSessions, deleteSession, getSession, listSessions } from '../api/chat'
 import { ApiError } from '../api/client'
 import type { SessionSummary } from '../api/types'
 import { ChatWindow } from '../components/ChatWindow'
@@ -62,6 +62,17 @@ export function ChatPage() {
     }
   }
 
+  async function handleDeleteAll() {
+    if (!window.confirm('Delete all conversations? This cannot be undone.')) return
+    try {
+      await deleteAllSessions()
+      if (sessionId) navigate('/chat')
+      refreshSessions()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
   const ready = !sessionId || loaded?.navigationKey === navigationKey
 
   return (
@@ -71,6 +82,15 @@ export function ChatPage() {
           + New chat
         </button>
         <SessionList sessions={sessions} onDelete={(id) => void handleDelete(id)} />
+        {sessions.length > 0 && (
+          <button
+            type="button"
+            className="danger delete-all"
+            onClick={() => void handleDeleteAll()}
+          >
+            Delete all chats
+          </button>
+        )}
       </aside>
       <div className="chat-main">
         {error && <ErrorBanner message={error} onRetry={() => window.location.reload()} />}

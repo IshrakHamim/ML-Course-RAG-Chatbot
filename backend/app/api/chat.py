@@ -50,6 +50,18 @@ def list_sessions(
     return [SessionOut.model_validate(s) for s in memory.list_sessions(db, user.id)]
 
 
+@router.delete(
+    "/sessions",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete all my chat sessions",
+)
+def delete_all_sessions(
+    db: Session = Depends(get_db), user: User = Depends(get_current_user)
+) -> Response:
+    memory.delete_all_sessions(db, user.id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get(
     "/sessions/{session_id}",
     response_model=SessionDetail,

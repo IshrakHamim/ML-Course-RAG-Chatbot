@@ -73,3 +73,40 @@ describe('ChatPage', () => {
     expect(await screen.findByText('Ask anything from the knowledge base.')).toBeInTheDocument()
   })
 })
+
+describe('ChatPage delete all', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('deletes every conversation after confirmation', async () => {
+    api.listSessions
+      .mockResolvedValueOnce([
+        { id: 'A', title: 'First question', created_at: '', updated_at: '' },
+        { id: 'B', title: 'Second question', created_at: '', updated_at: '' },
+      ])
+      .mockResolvedValue([])
+    api.deleteAllSessions.mockResolvedValue(undefined)
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const user = userEvent.setup()
+    renderPage('/chat')
+
+    await user.click(await screen.findByRole('button', { name: /delete all chats/i }))
+    expect(api.deleteAllSessions).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('No conversations yet.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /delete all chats/i })).not.toBeInTheDocument()
+  })
+
+  it('keeps conversations when the confirmation is cancelled', async () => {
+    api.listSessions.mockResolvedValue([
+      { id: 'A', title: 'First question', created_at: '', updated_at: '' },
+    ])
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const user = userEvent.setup()
+    renderPage('/chat')
+
+    await user.click(await screen.findByRole('button', { name: /delete all chats/i }))
+    expect(api.deleteAllSessions).not.toHaveBeenCalled()
+    expect(screen.getByRole('link', { name: 'First question' })).toBeInTheDocument()
+  })
+})
