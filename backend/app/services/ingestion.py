@@ -12,7 +12,7 @@ from pathlib import PurePosixPath
 from typing import Literal
 
 import httpx
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 from pypdf import PdfReader
 from pypdf.errors import PyPdfError
 
@@ -240,7 +240,10 @@ def _html_to_doc(html: str, url: str) -> ExtractedDoc:
     root = soup.find("main") or soup.find("article") or soup.body or soup
     # Inline elements (links, bold, citations) stay on one line; block elements get line breaks.
     for node in root.find_all(string=True):
-        node.replace_with(re.sub(r"\s+", " ", str(node)))
+        if type(node) is NavigableString:
+            node.replace_with(re.sub(r"\s+", " ", str(node)))
+        else:  # comments, doctype, CDATA, processing instructions
+            node.extract()
     for br in root.find_all("br"):
         br.replace_with("\n")
     for block in root.find_all(BLOCK_TAGS):

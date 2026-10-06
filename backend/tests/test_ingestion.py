@@ -384,3 +384,14 @@ def test_inline_elements_stay_on_one_line():
     assert "RAG is a technique for LLMs[1]." in lines
     assert "Intro" in lines and "Second paragraph." in lines
     assert "One" in lines and "Two" in lines
+
+
+def test_html_comments_and_templates_dropped():
+    html = (
+        "<main><p>Visible text.</p><!-- secret build note -->"
+        "<template><p>Hidden template</p></template></main>"
+    )
+    text = fetch("https://example.com/", lambda r: html_response(html)).sections[0].text
+    assert "Visible text." in text
+    assert "secret build note" not in text
+    assert "Hidden template" not in text
