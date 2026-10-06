@@ -41,7 +41,7 @@ export function LoginPage() {
         <Sparkle size={44} className="auth-logo" />
         <h1>QueryBuddy</h1>
         <p className="muted">
-          {isLogin ? 'Log in to ask questions about the course material.' : 'Create an account.'}
+          {isLogin ? 'Ask anything from the knowledge base.' : 'Create an account.'}
         </p>
         <label>
           Email

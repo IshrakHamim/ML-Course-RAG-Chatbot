@@ -115,7 +115,8 @@ cd frontend && npm run lint && npm test && npm run build
 
 | Symptom | Fix |
 |---------|-----|
-| "The AI service is busy, please try again." | Free-tier quota (429). Wait a minute. Ingestion retries automatically. |
+| "The AI service is busy, please try again." | Check the backend log. `429 … exceeded your current quota` means the key's free-tier quota is used up: wait for it to reset, or switch to another key. Very large documents (for example a whole book) use a lot of embedding quota. `503 … high demand` is temporary on Google's side. |
+| Changed `.env` but nothing is different | The backend reads `.env` only at startup (`--reload` watches code, not `.env`). Stop and restart `uvicorn`. |
 | `check-gemini` reports the key was rejected, or 403 "API has not been used in project" | Flip `GEMINI_USE_VERTEX`. AI Studio keys (including newer `AQ.…` ones) need `false`. |
 | `check-gemini` reports "model not found" | Check `GEMINI_CHAT_MODEL` and `GEMINI_EMBEDDING_MODEL` against the models your key can use. |
 | `check-gemini` reports that batch embedding failed | Set `EMBED_BATCH_SIZE=1` in `.env`. |

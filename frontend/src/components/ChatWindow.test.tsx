@@ -44,6 +44,7 @@ describe('ChatWindow', () => {
   it('greets with a Hello heading when the conversation is empty', () => {
     setup()
     expect(screen.getByRole('heading', { name: /hello/i })).toBeInTheDocument()
+    expect(screen.getByText('Ask anything from the knowledge base.')).toBeInTheDocument()
   })
 
   it('makes the composer glow while thinking', async () => {

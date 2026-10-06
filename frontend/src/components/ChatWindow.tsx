@@ -86,9 +86,7 @@ export function ChatWindow({
         {messages.length === 0 && !pending && (
           <div className="empty">
             <h2 className="hello">Hello, I&apos;m QueryBuddy</h2>
-            <p className="muted">
-              Ask a question about the course material. Answers come only from the knowledge base.
-            </p>
+            <p className="muted">Ask anything from the knowledge base.</p>
           </div>
         )}
         {messages.map((message, index) => (

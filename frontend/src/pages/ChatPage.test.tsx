@@ -70,6 +70,6 @@ describe('ChatPage', () => {
     const { ApiError } = await import('../api/client')
     api.getSession.mockRejectedValue(new ApiError(404, 'Session not found'))
     renderPage('/chat/missing')
-    expect(await screen.findByText(/ask a question about the course material/i)).toBeInTheDocument()
+    expect(await screen.findByText('Ask anything from the knowledge base.')).toBeInTheDocument()
   })
 })
