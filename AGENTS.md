@@ -239,14 +239,16 @@ pip install -e ".[dev]"
 alembic upgrade head
 python -m app.cli check-gemini
 python -m app.cli create-admin
+python -m app.cli ingest ../sample_data
+python -m app.cli search "question"  # shows retrieval scores (tune RAG_MIN_SCORE)
 uvicorn app.main:app --reload        # http://localhost:8000/docs
-ruff check . && pytest
+ruff check . && pytest               # needs the Docker DB; tests use database ragbot_test
 
 # Frontend
 cd frontend
 npm install
 npm run dev                          # http://localhost:5173
-npm run lint && npm run build
+npm run lint && npm test && npm run build
 ```
 
 Update this section in the same PR if commands change.
