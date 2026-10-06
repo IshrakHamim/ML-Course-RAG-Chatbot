@@ -114,6 +114,8 @@ def test_history_passed_to_generate(db, seeded_kb, fake_gemini):
         FALLBACK_ANSWER,
         "Sorry — I couldn’t find that in the knowledge base.",
         "I COULDN'T FIND THAT IN THE KNOWLEDGE BASE. Could you rephrase?",
+        "I could not find that in the knowledge base.",
+        "Sorry, I couldn't find this information in the knowledge base.",
     ],
 )
 def test_model_fallback_paraphrase_detected(db, seeded_kb, fake_gemini, reply):

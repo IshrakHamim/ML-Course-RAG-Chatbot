@@ -43,7 +43,8 @@ GREETINGS = {
     "good morning", "good afternoon", "good evening",
 }  # fmt: skip
 THANKS = {"thanks", "thank you", "thanks a lot", "thank you so much", "thx", "ty", "cheers"}
-FALLBACK_MARKER = "couldn't find that in the knowledge base"
+# Matches the fallback sentence and close paraphrases ("couldn't find this information in...").
+FALLBACK_PATTERN = re.compile(r"couldn't find [^.]{0,40}?in the knowledge base")
 
 Kind = Literal["answer", "fallback", "greeting"]
 
@@ -95,8 +96,8 @@ def build_context(chunks: list[RetrievedChunk]) -> str:
 
 
 def is_fallback(text: str) -> bool:
-    normalized = text.lower().replace("’", "'")
-    return FALLBACK_MARKER in normalized
+    normalized = text.lower().replace("’", "'").replace("could not", "couldn't")
+    return FALLBACK_PATTERN.search(normalized) is not None
 
 
 def _sources(chunks: list[RetrievedChunk]) -> list[Source]:
