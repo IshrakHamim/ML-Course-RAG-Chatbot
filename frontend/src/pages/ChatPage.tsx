@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { deleteSession, getSession, listSessions } from '../api/chat'
 import { ApiError } from '../api/client'
 import type { SessionSummary } from '../api/types'
@@ -10,13 +10,16 @@ import { SessionList } from '../components/SessionList'
 import { Spinner } from '../components/Spinner'
 
 interface LoadedSession {
-  id: string
+  // The navigation that fetched these messages. Revisiting a session is a new navigation,
+  // so the conversation is refetched instead of showing an outdated copy.
+  navigationKey: string
   messages: ChatMessageView[]
 }
 
 export function ChatPage() {
   const { sessionId } = useParams()
   const navigate = useNavigate()
+  const { key: navigationKey } = useLocation()
   const [sessions, setSessions] = useState<SessionSummary[]>([])
   const [loaded, setLoaded] = useState<LoadedSession | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -34,7 +37,7 @@ export function ChatPage() {
     let cancelled = false
     getSession(sessionId)
       .then((detail) => {
-        if (!cancelled) setLoaded({ id: detail.id, messages: detail.messages.map(toView) })
+        if (!cancelled) setLoaded({ navigationKey, messages: detail.messages.map(toView) })
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -47,7 +50,7 @@ export function ChatPage() {
     return () => {
       cancelled = true
     }
-  }, [sessionId, navigate])
+  }, [sessionId, navigationKey, navigate])
 
   async function handleDelete(id: string) {
     try {
@@ -59,7 +62,7 @@ export function ChatPage() {
     }
   }
 
-  const ready = !sessionId || loaded?.id === sessionId
+  const ready = !sessionId || loaded?.navigationKey === navigationKey
 
   return (
     <div className="chat-layout">
@@ -73,7 +76,7 @@ export function ChatPage() {
         {error && <ErrorBanner message={error} onRetry={() => window.location.reload()} />}
         {ready ? (
           <ChatWindow
-            key={sessionId ?? 'new'}
+            key={sessionId ? navigationKey : 'new'}
             sessionId={sessionId}
             initialMessages={sessionId && loaded ? loaded.messages : []}
             onSessionCreated={(id) => navigate(`/chat/${id}`)}
